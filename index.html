@@ -5,6 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>互動式景點地圖 - 囍羊羊牧場</title>
 
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        
+        // 預設將分析和廣告儲存狀態設為 'denied' (拒絕)
+        gtag('consent', 'default', {
+            'ad_storage': 'denied',
+            'analytics_storage': 'denied',
+            // 'wait_for_update': 500  // 讓 GA4 有時間等待用戶點擊
+        });
+    </script>
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-GZY77FSD13"></script>
+    <script>
+      // 確保 gtag 函數已定義
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+    
+      // GA4 設定
+      gtag('config', 'G-GZY77FSD13');
+    </script>
     <style>
         /* CSS 樣式區域 */
         
@@ -26,9 +48,7 @@
             max-width: 1000px; 
             aspect-ratio: 1000 / 650; 
             
-            /* ***** 網路圖片路徑：使用您提供的地圖連結 ***** */
             background-image: url('https://i.meee.com.tw/skfD6bU.png'); 
-            /* ************************************************* */
             
             background-size: contain; 
             background-repeat: no-repeat;
@@ -52,14 +72,15 @@
         /* 互動點位 (Hotspot) 樣式 - 尺寸再次放大 5% */
         .hotspot {
             position: absolute;
-            width: 67px;  /* <-- 63.8px * 1.05 = 66.99px, 四捨五入為 67px */
-            height: 67px; /* <-- 63.8px * 1.05 = 66.99px, 四捨五入為 67px */
-            background-color: transparent; 
+            width: 67px;  
+            height: 67px; 
+            /* 顯示紅色框線與半透明背景 */
+            background-color: rgba(255, 255, 255, 0.4); 
+            border: 2px solid red; 
             border-radius: 0; 
             cursor: pointer; 
             transform: translate(-50%, -50%); 
             transition: transform 0.3s ease; 
-            border: none; 
         }
         
         .hotspot:hover {
@@ -229,6 +250,41 @@
                 height: 58px;
             }
         }
+
+        /* 🌟 同意彈窗 CSS 樣式 🌟 */
+        #consent-banner {
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            width: 100%; 
+            background: rgba(0, 0, 0, 0.85); /* 深色背景 */
+            color: white; 
+            padding: 15px; 
+            text-align: center; 
+            z-index: 9999;
+            font-size: 0.9em;
+            display: none; /* 預設在 JS 檢查 Cookie 後才會顯示 */
+        }
+        #consent-banner button {
+            margin-left: 15px; 
+            background: #4CAF50; /* 同意按鈕綠色 */
+            color: white; 
+            border: none; 
+            padding: 8px 15px; 
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        #consent-banner button:hover {
+            background: #45a049;
+        }
+        #consent-banner button.deny-btn {
+            background: #f44336; /* 拒絕按鈕紅色 */
+        }
+        #consent-banner button.deny-btn:hover {
+            background: #da190b;
+        }
+        /* 🌟 同意彈窗 CSS 結束 🌟 */
     </style>
 </head>
 <body>
@@ -239,11 +295,11 @@
             
             <div class="hotspot" id="hotspot-jinshengmu" style="left: 58.25%; top: 24%;"></div>
 
-            <div class="hotspot" id="hotspot-qiaokeli" style="left: 45.5%; top: 49%;"></div>
+            <div class="hotspot" id="hotspot-qiaokeli" style="left: 45.5%; top: 47.5%;"></div>
 
             <div class="hotspot" id="hotspot-sheep-farm" style="left: 48.5%; top: 68%;"></div>
 
-            <div class="hotspot" id="hotspot-senlindiyuan" style="left: 20%; top: 78.5%;"></div>
+            <div class="hotspot" id="hotspot-senlindiyuan" style="left: 20%; top: 77%;"></div>
             
         </div>
     </div>
@@ -257,14 +313,95 @@
         </div>
     </div>
 
+    <div id="consent-banner">
+        本網站使用 Google Analytics 進行流量分析，幫助我們改善服務。請選擇是否同意數據收集：
+        <button onclick="grantConsent();">同意</button>
+        <button onclick="denyConsent();" class="deny-btn">拒絕</button>
+    </div>
     <script>
+        // **********************************************
+        // 🌟 同意模式 JavaScript 邏輯 🌟
+        // **********************************************
+
+        // 輔助函數：隱藏彈窗
+        function hideConsentBanner() {
+            const banner = document.getElementById('consent-banner');
+            if (banner) {
+                banner.style.display = 'none';
+            }
+        }
+        
+        // 輔助函數：設定 Cookie (有效期 30 天)
+        function setCookie(name, value, days) {
+            const date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            const expires = "; expires=" + date.toUTCString();
+            document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+        }
+        
+        // 輔助函數：讀取 Cookie
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        // 點擊「同意」時的處理
+        function grantConsent() {
+            // 發送更新指令給 GA4：用戶已同意分析和廣告儲存
+            gtag('consent', 'update', {
+                'ad_storage': 'granted',
+                'analytics_storage': 'granted'
+            });
+            hideConsentBanner();
+            // 期限為 30 天
+            setCookie('consent_status', 'granted', 30);
+        }
+
+        // 點擊「拒絕」時的處理
+        function denyConsent() {
+            // 發送更新指令給 GA4：用戶拒絕分析和廣告儲存
+            gtag('consent', 'update', {
+                'ad_storage': 'denied',
+                'analytics_storage': 'denied'
+            });
+            hideConsentBanner();
+            // 期限為 30 天
+            setCookie('consent_status', 'denied', 30);
+        }
+
+        // DOM 內容加載完成後執行
         document.addEventListener('DOMContentLoaded', function() {
             const hotspots = document.querySelectorAll('.hotspot'); 
             const modal = document.getElementById('infoModal'); 
             const closeButton = document.querySelector('.close-button'); 
             const modalTitle = document.getElementById('modalTitle'); 
             const modalBody = document.getElementById('modalBody'); 
+            const banner = document.getElementById('consent-banner');
             
+            // 檢查用戶是否已做過選擇
+            const consentStatus = getCookie('consent_status');
+            
+            if (consentStatus) {
+                // 如果用戶已經選擇過，隱藏彈窗
+                banner.style.display = 'none'; 
+                
+                // 根據 Cookie 狀態設置 GA4 (讓 GA4 重新初始化)
+                gtag('consent', 'update', {
+                    'ad_storage': consentStatus === 'granted' ? 'granted' : 'denied',
+                    'analytics_storage': consentStatus === 'granted' ? 'granted' : 'denied'
+                });
+            } else {
+                // 如果是新用戶，顯示彈窗
+                banner.style.display = 'block';
+            }
+            
+            // --- 景點資訊設定 (保持不變) ---
             function getLeftContent(imageUrls, altText) {
                 let imagesHtml = imageUrls.map(url => `<img src="${url}" alt="${altText}" class="modal-image">`).join('');
                 return `<div class="modal-left">${imagesHtml}</div>`;
@@ -282,59 +419,53 @@
             }
 
             const venueInfo = {
+                // (景點資訊內容保持不變，略)
                 'hotspot-jinshengmu': {
                     title: '萬金聖母聖殿',
                     images: ['https://i.meee.com.tw/NyaDxcP.jpg'], 
                     imageAlt: '萬金聖母聖殿圖片',
-                    infoBlock: `
-                        <span class="info-detail">🕒 營業時間：週一至週日6:30-21:30</span>
-                        <span class="info-detail">📍 地址：屏東縣萬巒鄉萬金村萬新路24號</span>
-                        <span class="info-detail">📞 電話：087832005</span>
-                    `,
+                    infoBlock: `<span class="info-detail">🕒 營業時間：週一至週日6:30-21:30</span><span class="info-detail">📍 地址：屏東縣萬巒鄉萬金村萬新路24號</span><span class="info-detail">📞 電話：087832005</span>`,
                     description: '全台最古老的天主教堂之一，古典莊嚴、富含歷史故事。聖誕節期間更化身為浪漫燈海村落。'
                 },
                 'hotspot-qiaokeli': {
                     title: '屏東可可巧克力園區',
                     images: ['https://i.meee.com.tw/c5ElWBT.jpg'], 
                     imageAlt: '巧克力園區圖片',
-                    infoBlock: `
-                        <span class="info-detail">🕒 營業時間：週一週二公休、週三至週日10:00-18:00</span>
-                        <span class="info-detail">📍 地址：屏東縣萬巒鄉光明路62-2號</span>
-                        <span class="info-detail">📞 電話：087831757</span>
-                    `,
+                    infoBlock: `<span class="info-detail">🕒 營業時間：週一週二公休、週三至週日10:00-18:00</span><span class="info-detail">📍 地址：屏東縣萬巒鄉光明路62-2號</span><span class="info-detail">📞 電話：087831757</span>`,
                     description: '走進巧克力的夢幻世界，體驗可可DIY、拍下純白教堂美照，香氣與甜味交織出屏東的幸福滋味。'
                 },
                 'hotspot-senlindiyuan': {
                     title: '林後四林平地森林園區',
                     images: ['https://i.meee.com.tw/8UTO3FY.jpg'], 
                     imageAlt: '森林園區圖片',
-                    infoBlock: `
-                        <span class="info-detail">🕒 營業時間：週一至週日08:00–17:00</span>
-                        <span class="info-detail">📍 地址：屏東縣潮州鎮潮義路221-1號</span>
-                        <span class="info-detail">📞 電話：087813529</span>
-                    `,
+                    infoBlock: `<span class="info-detail">🕒 營業時間：週一至週日08:00–17:00</span><span class="info-detail">📍 地址：屏東縣潮州鎮潮義路221-1號</span><span class="info-detail">📞 電話：087813529</span>`,
                     description: '綠意盎然、步道平緩，是親子放鬆、野餐玩水的好去處。免門票又能親近大自然，感受森林的靜謐與活力。'
                 },
                 'hotspot-sheep-farm': {
                     title: '囍羊羊牧場',
-                    images: ['https://i.meee.com.tw/Z1arvwd.jpg'], // 核心變更：已移除第二張圖片 (Kzdj2i6.jpg)
+                    images: ['https://i.meee.com.tw/Z1arvwd.jpg'], 
                     imageAlt: '羊羊牧場圖片',
-                    infoBlock: `
-                        <span class="info-detail">🕒 營業時間：週一公休、週二至週五10:00-14:00 16:00-18:00、週六至週日10:00-18:00</span>
-                        <span class="info-detail">📍 地址：屏東縣萬巒鄉中興路29-2號</span>
-                        <span class="info-detail">📞 電話：087834824</span>
-                    `,
+                    infoBlock: `<span class="info-detail">🕒 營業時間：週一公休、週二至週五10:00-14:00 16:00-18:00、週六至週日10:00-18:00</span><span class="info-detail">📍 地址：屏東縣萬巒鄉中興路29-2號</span><span class="info-detail">📞 電話：087834824</span>`,
                     description: '近距離餵食、體驗羊奶饅頭DIY，還能品嚐濃郁的羊奶火鍋與甜點，在悠閒牧場裡感受療癒時光。'
                 }
             };
+            // --- 景點資訊設定結束 ---
 
-            // 互動邏輯
+            // 互動邏輯 (包含 GA4 追蹤)
             hotspots.forEach(hotspot => {
                 hotspot.addEventListener('click', function() {
                     const id = this.id; 
                     const info = venueInfo[id]; 
 
                     if (info) {
+                        // 🌟 GA4 自訂事件追蹤：追蹤景點點擊次數 🌟
+                        gtag('event', 'hotspot_click', {
+                            'event_category': 'Map_Interaction',
+                            'event_label': info.title, // 傳送景點名稱
+                            'venue_id': id // 傳送熱點 ID
+                        });
+                        // 🌟 GA4 自訂事件追蹤結束 🌟
+
                         modalTitle.textContent = info.title; 
                         
                         const contentHTML = 
@@ -362,7 +493,7 @@
                 }
             });
             
-            console.info("已將熱點點擊區放大 5% (67px)，並移除囍羊羊牧場的第二張圖片。");
+            console.info("已完成 GA4 Consent Mode 及熱點點擊追蹤整合。");
         });
     </script>
 </body>
