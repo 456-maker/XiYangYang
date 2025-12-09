@@ -69,25 +69,28 @@
             left: 0;
         }
 
-        /* 互動點位 (Hotspot) 樣式 - 尺寸再次放大 5% */
+        /* 互動點位 (Hotspot) 樣式 */
         .hotspot {
             position: absolute;
-            width: 67px;  
-            height: 67px; 
-            /* 顯示紅色框線與半透明背景 */
-            background-color: rgba(255, 255, 255, 0.4); 
-            border: 2px solid red; 
+            width: 74px;  
+            height: 74px; 
+            /* *** 🚩 已修改：完全透明，但保留尺寸和功能 🚩 *** */
+            background-color: transparent; 
+            border: none; /* 移除邊框 */
+            /* ************************************** */
             border-radius: 0; 
             cursor: pointer; 
+            /* 確保熱點是以其中心點為基準點，同時包含放大效果 */
             transform: translate(-50%, -50%); 
             transition: transform 0.3s ease; 
         }
         
         .hotspot:hover {
+            /* 滑鼠懸停時給予輕微放大，告訴用戶這是一個可點擊區域 */
             transform: translate(-50%, -50%) scale(1.05); 
         }
 
-        /* 彈出顯示框 (Modal) 樣式 */
+        /* 彈出顯示框 (Modal) 樣式 (以下內容保持不變) */
         .modal {
             display: none; 
             position: fixed; 
@@ -244,10 +247,10 @@
                 display: none;
             }
 
-            /* 修正 3：在手機上，熱點點擊範圍縮小回原始尺寸 */
+            /* 修正 3：在手機上，熱點點擊範圍尺寸隨整體放大 */
             .hotspot {
-                width: 58px;
-                height: 58px;
+                width: 74px; /* 統一為 74px */
+                height: 74px;
             }
         }
 
