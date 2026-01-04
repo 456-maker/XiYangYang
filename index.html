@@ -1,503 +1,148 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>互動式景點地圖 - 囍羊羊牧場</title>
+<meta charset="UTF-8">
+<title>魔法元素集點</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        
-        // 預設將分析和廣告儲存狀態設為 'denied' (拒絕)
-        gtag('consent', 'default', {
-            'ad_storage': 'denied',
-            'analytics_storage': 'denied',
-            // 'wait_for_update': 500  // 讓 GA4 有時間等待用戶點擊
-        });
-    </script>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f9f9f9;
+}
 
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-GZY77FSD13"></script>
-    <script>
-      // 確保 gtag 函數已定義
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-    
-      // GA4 設定
-      gtag('config', 'G-GZY77FSD13');
-    </script>
-    <style>
-        /* CSS 樣式區域 */
-        
-        /* 全域設定 */
-        body {
-            margin: 0;
-            font-family: '微軟正黑體', 'Arial', sans-serif;
-            background-color: #f0f0f0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            overflow-x: hidden; 
-        }
+/* ✅ 中央窗格大幅放大 */
+.container {
+  width: 95%;
+  max-width: 680px;          /* 原 500 → 放大 */
+  padding: 56px;             /* 原 36 → 放大 */
+  text-align: center;
+  background: #fff;
+  border-radius: 18px;       /* 圓角同步放大 */
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
 
-        /* 地圖容器 */
-        .map-container {
-            width: 95%; 
-            max-width: 1000px; 
-            aspect-ratio: 1000 / 650; 
-            
-            background-image: url('https://i.meee.com.tw/skfD6bU.png'); 
-            
-            background-size: contain; 
-            background-repeat: no-repeat;
-            background-position: center;
-            position: relative; 
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-            overflow: hidden; 
-            margin: 10px; 
-        }
+/* ✅ 字體全面放大 */
+h1 {
+  font-size: 2.3em;
+  margin-bottom: 24px;
+}
 
-        /* 地圖上的覆蓋層，用於放置熱點 */
-        .map-overlay {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-        }
+p {
+  font-size: 1.7em;
+  line-height: 1.6;
+}
 
-        /* 互動點位 (Hotspot) 樣式 */
-        .hotspot {
-            position: absolute;
-            width: 74px;  
-            height: 74px; 
-            /* *** 🚩 已修改：完全透明，但保留尺寸和功能 🚩 *** */
-            background-color: transparent; 
-            border: none; /* 移除邊框 */
-            /* ************************************** */
-            border-radius: 0; 
-            cursor: pointer; 
-            /* 確保熱點是以其中心點為基準點，同時包含放大效果 */
-            transform: translate(-50%, -50%); 
-            transition: transform 0.3s ease; 
-        }
-        
-        .hotspot:hover {
-            /* 滑鼠懸停時給予輕微放大，告訴用戶這是一個可點擊區域 */
-            transform: translate(-50%, -50%) scale(1.05); 
-        }
+#message {
+  margin-top: 32px;
+  font-weight: bold;
+  color: #007bff;
+  font-size: 1.8em;
+  white-space: pre-wrap;
+}
 
-        /* 彈出顯示框 (Modal) 樣式 (以下內容保持不變) */
-        .modal {
-            display: none; 
-            position: fixed; 
-            z-index: 1000; 
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto; 
-            background-color: rgba(0,0,0,0.7); 
-            backdrop-filter: blur(5px); 
-            justify-content: center; 
-            align-items: center;    
-        }
+.back-box {
+  margin-top: 36px;
+  padding: 18px 12px;
+  background-color: #f5c400; /* 黃底 */
+  color: #ffffff;            /* 白字 */
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: center;
+  font-size: 1.4em;
+  font-weight: bold;
+  line-height: 1.4;
+}
 
-        /* 對話框內容區塊 */
-        .modal-content {
-            background-color: #fefefe;
-            padding: 20px; 
-            border: 1px solid #888;
-            width: 90%; 
-            max-width: 36vw; 
-            min-width: 360px; 
-            border-radius: 10px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
-            position: relative;
-            animation: fadeIn 0.3s ease-out; 
-            
-            display: flex;
-            flex-direction: column; 
-        }
+.back-box:hover {
+  opacity: 0.9;
+}
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.8); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        .close-button {
-            color: #aaa;
-            font-size: 32px;
-            font-weight: bold;
-            position: absolute;
-            top: 10px;
-            right: 20px;
-            cursor: pointer;
-        }
-
-        .close-button:hover { color: #333; }
-
-        /* 景點大標題顏色修正為深綠色 */
-        #modalTitle {
-            color: #006400; 
-            font-size: 1.5em; 
-            margin-bottom: 10px;
-            padding-bottom: 5px;
-            border-bottom: 3px solid #eee;
-            align-self: flex-start; 
-            width: 100%;
-        }
-
-        /* 核心調整：內容分欄容器 */
-        .modal-body-container {
-            display: flex;
-            align-items: flex-start; 
-            width: 100%;
-        }
-
-        /* 左側圖片區塊 */
-        .modal-left {
-            flex: 1; 
-            padding-right: 15px; 
-            max-width: 50%; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 10px; 
-        }
-
-        /* 右側文字區塊 */
-        .modal-right {
-            flex: 1; 
-            padding-left: 15px; 
-            max-width: 50%; 
-        }
-
-        /* 垂直分隔線 */
-        .vertical-line {
-            width: 1px;
-            background-color: #ccc; 
-            height: auto; 
-            min-height: 250px; 
-        }
-
-        /* 圖片樣式調整 */
-        .modal-image {
-            max-width: 100%;
-            height: auto;
-            display: block;
-            margin: 0; 
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-        }
-
-        /* 文字資訊樣式保持不變 */
-        .info-block {
-            line-height: 1.5; 
-            margin-bottom: 15px;
-            color: #555;
-            font-size: 0.9em; 
-        }
-        .info-detail {
-            margin-bottom: 5px; 
-            display: block; 
-        }
-        .modal-right p {
-            line-height: 1.4;
-            margin-bottom: 10px;
-            color: #333;
-            font-size: 0.9em;
-        }
-        
-        /* === 響應式設計修正 (RWD) === */
-        @media (max-width: 768px) {
-            
-            /* 修正 1：對話框在手機上變寬且內容垂直排列 */
-            .modal-content {
-                max-width: 90vw; 
-                min-width: unset; 
-                max-height: 80vh; 
-                overflow-y: auto; 
-                padding: 15px; 
-            }
-
-            /* 修正 2：內容分欄在手機上垂直堆疊 */
-            .modal-body-container {
-                flex-direction: column; 
-            }
-
-            .modal-left, .modal-right {
-                max-width: 100%; 
-                padding: 0;
-            }
-            
-            /* 確保圖片和文字之間有間距 */
-            .modal-left {
-                margin-bottom: 15px;
-            }
-            
-            .modal-right {
-                padding-left: 0;
-            }
-
-            /* 隱藏垂直分隔線 */
-            .vertical-line {
-                display: none;
-            }
-
-            /* 修正 3：在手機上，熱點點擊範圍尺寸隨整體放大 */
-            .hotspot {
-                width: 74px; /* 統一為 74px */
-                height: 74px;
-            }
-        }
-
-        /* 🌟 同意彈窗 CSS 樣式 🌟 */
-        #consent-banner {
-            position: fixed; 
-            bottom: 0; 
-            left: 0; 
-            width: 100%; 
-            background: rgba(0, 0, 0, 0.85); /* 深色背景 */
-            color: white; 
-            padding: 15px; 
-            text-align: center; 
-            z-index: 9999;
-            font-size: 0.9em;
-            display: none; /* 預設在 JS 檢查 Cookie 後才會顯示 */
-        }
-        #consent-banner button {
-            margin-left: 15px; 
-            background: #4CAF50; /* 同意按鈕綠色 */
-            color: white; 
-            border: none; 
-            padding: 8px 15px; 
-            cursor: pointer;
-            border-radius: 5px;
-            transition: background 0.3s;
-        }
-        #consent-banner button:hover {
-            background: #45a049;
-        }
-        #consent-banner button.deny-btn {
-            background: #f44336; /* 拒絕按鈕紅色 */
-        }
-        #consent-banner button.deny-btn:hover {
-            background: #da190b;
-        }
-        /* 🌟 同意彈窗 CSS 結束 🌟 */
-    </style>
+</style>
 </head>
+
 <body>
 
-    <div class="map-container">
-        
-        <div class="map-overlay">
-            
-            <div class="hotspot" id="hotspot-jinshengmu" style="left: 58.25%; top: 24%;"></div>
+<div class="container">
+  <h1 id="taskTitle">魔法元素任務</h1>
+  <p id="taskDesc">任務說明文字</p>
+  <div id="message">驗證中，請稍候...</div>
+  <div id="backToLine" class="back-box">
+  <div>請點擊</div>
+  <div>看看守護者說了什麼！</div>
+</div>
 
-            <div class="hotspot" id="hotspot-qiaokeli" style="left: 45.5%; top: 47.5%;"></div>
+<script>
+const WEB_APP_URL =
+  "https://script.google.com/macros/s/AKfycbxjdQ2N_uYiLDSPa72H50aoPoma6KMYtwyGPfJ4IKGvzDAgK4cQb0aW078b9dYap4s/exec";
 
-            <div class="hotspot" id="hotspot-sheep-farm" style="left: 48.5%; top: 68%;"></div>
+const LIFF_ID = "2008813911-7WAPqwiU";
 
-            <div class="hotspot" id="hotspot-senlindiyuan" style="left: 20%; top: 77%;"></div>
-            
-        </div>
-    </div>
+const tasks = {
+  "01": { title: "第一站🟠 橘色｜活力能量", desc: "恭喜你獲得了【活力能量】..." },
+  "02": { title: "第二站⚫ 黑色｜節能之力", desc: "恭喜你獲得了【節能之力】..." },
+  "03": { title: "第三站🟢 綠色｜森林守護", desc: "恭喜你獲得了【森林守護】..." },
+  "04": { title: "第四站🔵 淺藍色｜清泉祝福", desc: "恭喜你獲得了【清泉祝福】..." },
+  "05": { title: "第五站🟣 紫色｜智慧魔法", desc: "恭喜你獲得了【智慧魔法】..." },
+  "06": { title: "第六站🟤 棕色｜大地之根", desc: "恭喜你獲得了【大地之根】..." },
+  "07": { title: "第七站🔵 深藍色｜海洋之力", desc: "恭喜你獲得了【海洋之力】..." },
+  "08": { title: "第八站🔴 紅色｜溫暖之心", desc: "恭喜你獲得了【溫暖之心】..." },
+  "09": { title: "第九站🟡 黃色｜陽光魔法", desc: "恭喜你獲得了【陽光魔法】..." }
+};
 
-    <div id="infoModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h3 id="modalTitle">景點名稱</h3>
-            <div id="modalBody" class="modal-body-container">
-                </div>
-        </div>
-    </div>
+const urlParams = new URLSearchParams(window.location.search);
+const station = urlParams.get("station");
 
-    <div id="consent-banner">
-        本網站使用 Google Analytics 進行流量分析，幫助我們改善服務。請選擇是否同意數據收集：
-        <button onclick="grantConsent();">同意</button>
-        <button onclick="denyConsent();" class="deny-btn">拒絕</button>
-    </div>
-    <script>
-        // **********************************************
-        // 🌟 同意模式 JavaScript 邏輯 🌟
-        // **********************************************
+if (!tasks[station]) {
+  document.getElementById("taskTitle").innerText = "感應錯誤";
+  document.getElementById("taskDesc").innerText = "請確認掃描的 NFC 是否正確。";
+  document.getElementById("message").innerText = "";
+} else {
+  document.getElementById("taskTitle").innerText = tasks[station].title;
+  document.getElementById("taskDesc").innerText = tasks[station].desc;
+}
 
-        // 輔助函數：隱藏彈窗
-        function hideConsentBanner() {
-            const banner = document.getElementById('consent-banner');
-            if (banner) {
-                banner.style.display = 'none';
-            }
-        }
-        
-        // 輔助函數：設定 Cookie (有效期 30 天)
-        function setCookie(name, value, days) {
-            const date = new Date();
-            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-            const expires = "; expires=" + date.toUTCString();
-            document.cookie = name + "=" + (value || "")  + expires + "; path=/";
-        }
-        
-        // 輔助函數：讀取 Cookie
-        function getCookie(name) {
-            const nameEQ = name + "=";
-            const ca = document.cookie.split(';');
-            for(let i = 0; i < ca.length; i++) {
-                let c = ca[i];
-                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
-            }
-            return null;
-        }
+async function main() {
+  try {
+    await liff.init({ liffId: LIFF_ID });
 
-        // 點擊「同意」時的處理
-        function grantConsent() {
-            // 發送更新指令給 GA4：用戶已同意分析和廣告儲存
-            gtag('consent', 'update', {
-                'ad_storage': 'granted',
-                'analytics_storage': 'granted'
-            });
-            hideConsentBanner();
-            // 期限為 30 天
-            setCookie('consent_status', 'granted', 30);
-        }
+    if (!liff.isLoggedIn()) {
+      liff.login({ redirectUri: window.location.href });
+      return;
+    }
 
-        // 點擊「拒絕」時的處理
-        function denyConsent() {
-            // 發送更新指令給 GA4：用戶拒絕分析和廣告儲存
-            gtag('consent', 'update', {
-                'ad_storage': 'denied',
-                'analytics_storage': 'denied'
-            });
-            hideConsentBanner();
-            // 期限為 30 天
-            setCookie('consent_status', 'denied', 30);
-        }
+    const profile = await liff.getProfile();
+    const userId = profile.userId;
 
-        // DOM 內容加載完成後執行
-        document.addEventListener('DOMContentLoaded', function() {
-            const hotspots = document.querySelectorAll('.hotspot'); 
-            const modal = document.getElementById('infoModal'); 
-            const closeButton = document.querySelector('.close-button'); 
-            const modalTitle = document.getElementById('modalTitle'); 
-            const modalBody = document.getElementById('modalBody'); 
-            const banner = document.getElementById('consent-banner');
-            
-            // 檢查用戶是否已做過選擇
-            const consentStatus = getCookie('consent_status');
-            
-            if (consentStatus) {
-                // 如果用戶已經選擇過，隱藏彈窗
-                banner.style.display = 'none'; 
-                
-                // 根據 Cookie 狀態設置 GA4 (讓 GA4 重新初始化)
-                gtag('consent', 'update', {
-                    'ad_storage': consentStatus === 'granted' ? 'granted' : 'denied',
-                    'analytics_storage': consentStatus === 'granted' ? 'granted' : 'denied'
-                });
-            } else {
-                // 如果是新用戶，顯示彈窗
-                banner.style.display = 'block';
-            }
-            
-            // --- 景點資訊設定 (保持不變) ---
-            function getLeftContent(imageUrls, altText) {
-                let imagesHtml = imageUrls.map(url => `<img src="${url}" alt="${altText}" class="modal-image">`).join('');
-                return `<div class="modal-left">${imagesHtml}</div>`;
-            }
+    const res = await fetch(
+      `${WEB_APP_URL}?lineId=${encodeURIComponent(userId)}&station=${encodeURIComponent(station)}`
+    );
+    const msg = await res.text();
 
-            function getRightContent(infoBlock, description) {
-                return `
-                    <div class="modal-right">
-                        <div class="info-block">
-                            ${infoBlock}
-                        </div>
-                        <p>${description}</p>
-                    </div>
-                `;
-            }
+    document.getElementById("message").innerText = msg;
 
-            const venueInfo = {
-                // (景點資訊內容保持不變，略)
-                'hotspot-jinshengmu': {
-                    title: '萬金聖母聖殿',
-                    images: ['https://i.meee.com.tw/NyaDxcP.jpg'], 
-                    imageAlt: '萬金聖母聖殿圖片',
-                    infoBlock: `<span class="info-detail">🕒 營業時間：週一至週日6:30-21:30</span><span class="info-detail">📍 地址：屏東縣萬巒鄉萬金村萬新路24號</span><span class="info-detail">📞 電話：087832005</span>`,
-                    description: '全台最古老的天主教堂之一，古典莊嚴、富含歷史故事。聖誕節期間更化身為浪漫燈海村落。'
-                },
-                'hotspot-qiaokeli': {
-                    title: '屏東可可巧克力園區',
-                    images: ['https://i.meee.com.tw/c5ElWBT.jpg'], 
-                    imageAlt: '巧克力園區圖片',
-                    infoBlock: `<span class="info-detail">🕒 營業時間：週一週二公休、週三至週日10:00-18:00</span><span class="info-detail">📍 地址：屏東縣萬巒鄉光明路62-2號</span><span class="info-detail">📞 電話：087831757</span>`,
-                    description: '走進巧克力的夢幻世界，體驗可可DIY、拍下純白教堂美照，香氣與甜味交織出屏東的幸福滋味。'
-                },
-                'hotspot-senlindiyuan': {
-                    title: '林後四林平地森林園區',
-                    images: ['https://i.meee.com.tw/8UTO3FY.jpg'], 
-                    imageAlt: '森林園區圖片',
-                    infoBlock: `<span class="info-detail">🕒 營業時間：週一至週日08:00–17:00</span><span class="info-detail">📍 地址：屏東縣潮州鎮潮義路221-1號</span><span class="info-detail">📞 電話：087813529</span>`,
-                    description: '綠意盎然、步道平緩，是親子放鬆、野餐玩水的好去處。免門票又能親近大自然，感受森林的靜謐與活力。'
-                },
-                'hotspot-sheep-farm': {
-                    title: '囍羊羊牧場',
-                    images: ['https://i.meee.com.tw/Z1arvwd.jpg'], 
-                    imageAlt: '羊羊牧場圖片',
-                    infoBlock: `<span class="info-detail">🕒 營業時間：週一公休、週二至週五10:00-14:00 16:00-18:00、週六至週日10:00-18:00</span><span class="info-detail">📍 地址：屏東縣萬巒鄉中興路29-2號</span><span class="info-detail">📞 電話：087834824</span>`,
-                    description: '近距離餵食、體驗羊奶饅頭DIY，還能品嚐濃郁的羊奶火鍋與甜點，在悠閒牧場裡感受療癒時光。'
-                }
-            };
-            // --- 景點資訊設定結束 ---
+    document.getElementById("backToLine").addEventListener("click", () => {
+  if (liff.isInClient()) {
+    liff.closeWindow(); // ✅ 回到 LINE OA 聊天室
+  } else {
+    // 若不是在 LINE 裡打開（例如用瀏覽器）
+    window.location.href = "https://line.me";
+  }
+});
 
-            // 互動邏輯 (包含 GA4 追蹤)
-            hotspots.forEach(hotspot => {
-                hotspot.addEventListener('click', function() {
-                    const id = this.id; 
-                    const info = venueInfo[id]; 
+  } catch (err) {
+    document.getElementById("message").innerText = "系統錯誤，請重新操作";
+    console.error(err);
+  }
+}
 
-                    if (info) {
-                        // 🌟 GA4 自訂事件追蹤：追蹤景點點擊次數 🌟
-                        gtag('event', 'hotspot_click', {
-                            'event_category': 'Map_Interaction',
-                            'event_label': info.title, // 傳送景點名稱
-                            'venue_id': id // 傳送熱點 ID
-                        });
-                        // 🌟 GA4 自訂事件追蹤結束 🌟
+main();
+</script>
 
-                        modalTitle.textContent = info.title; 
-                        
-                        const contentHTML = 
-                            getLeftContent(info.images, info.imageAlt) + 
-                            '<div class="vertical-line"></div>' + 
-                            getRightContent(info.infoBlock, info.description);
-                            
-                        modalBody.innerHTML = contentHTML;
-                        modal.style.display = 'flex'; 
-                    } else {
-                        console.warn('找不到對應的景點資訊:', id); 
-                    }
-                });
-            });
-
-            // 關閉彈出框
-            closeButton.addEventListener('click', function() {
-                modal.style.display = 'none'; 
-            });
-
-            // 點擊外部關閉
-            window.addEventListener('click', function(event) {
-                if (event.target === modal) {
-                    modal.style.display = 'none';
-                }
-            });
-            
-            console.info("已完成 GA4 Consent Mode 及熱點點擊追蹤整合。");
-        });
-    </script>
 </body>
 </html>
