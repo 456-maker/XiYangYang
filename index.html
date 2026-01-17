@@ -210,49 +210,7 @@
             font-size: 0.9em;
         }
         
-        /* === 響應式設計修正 (RWD) === */
-        @media (max-width: 768px) {
-            
-            /* 修正 1：對話框在手機上變寬且內容垂直排列 */
-            .modal-content {
-                max-width: 90vw; 
-                min-width: unset; 
-                max-height: 80vh; 
-                overflow-y: auto; 
-                padding: 15px; 
-            }
-
-            /* 修正 2：內容分欄在手機上垂直堆疊 */
-            .modal-body-container {
-                flex-direction: column; 
-            }
-
-            .modal-left, .modal-right {
-                max-width: 100%; 
-                padding: 0;
-            }
-            
-            /* 確保圖片和文字之間有間距 */
-            .modal-left {
-                margin-bottom: 15px;
-            }
-            
-            .modal-right {
-                padding-left: 0;
-            }
-
-            /* 隱藏垂直分隔線 */
-            .vertical-line {
-                display: none;
-            }
-
-            /* 修正 3：在手機上，熱點點擊範圍尺寸隨整體放大 */
-            .hotspot {
-                width: 74px; /* 統一為 74px */
-                height: 74px;
-            }
-        }
-
+       
         /* 🌟 同意彈窗 CSS 樣式 🌟 */
         #consent-banner {
             position: fixed; 
